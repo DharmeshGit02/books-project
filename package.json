@@ -1,0 +1,16 @@
+{
+  "name": "archive",
+  "version": "1.0.0",
+  "description": "creating books website with node.js express.js ejs postgreSQL bootstrap",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dharmesh Marathe",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  }
+}
