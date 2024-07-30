@@ -5,12 +5,13 @@ const passport = require("passport")
 const bcrypt = require("bcrypt")
 const { Strategy } = require("passport-local")
 const cookieParser = require("cookie-parser")
+require("dot-env").config()
 
 const db = new Client({
-    user: "postgres",
-    host: "localhost",
-    database: "BookDB",
-    password: "Dharmesh@2002"
+    user: process.env.PSQL_USER,
+    host: process.env.PSQL_HOST,
+    database: process.env.PSQL_DB,
+    password: process.env.PSQL_PASSWORD
 })
 
 let resultOffset = 0
@@ -28,7 +29,7 @@ async function getMaxNumberOfBooks() {
 app.use(Express.urlencoded({ extended: true }))
 //This line must come before using passport session
 app.use(session({
-    secret: "ARCHIVES",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
     cookie: {
@@ -46,8 +47,9 @@ app.get("/", (req, res) => {
 })
 
 app.get("/home", async (req, res) => {
+    // console.log("Cookies:", req.cookies, req.cookies.username)
     if (req.isAuthenticated()) {
-        console.log(res.user)
+        // console.log(res.user)
         try {
             genres = []
             authors = []
@@ -76,9 +78,7 @@ app.get("/home", async (req, res) => {
             query = "SELECT name AS author FROM authors"
             const responseAuthors = await db.query(query)
             responseAuthors.rows.forEach((author) => authors.push(author.author))
-            res.cookie("uid", req.user.id)
-            res.cookie("username", req.user.username)
-            res.render("index.ejs", { books: responseBooks.rows, genres: genres, authors: authors, pageNumber: pageNumber, user_id: req.user.id })
+            res.render("index.ejs", { books: responseBooks.rows, genres: genres, authors: authors, pageNumber: pageNumber, user_id: req.cookies.uid, username: req.cookies.username })
         } catch (error) {
             console.log(error)
         }
@@ -87,21 +87,23 @@ app.get("/home", async (req, res) => {
 
 app.get("/pagination/:direction", (req, res) => {
     if (req.params.direction === "next") {
-        console.log(pageNumber <= maxPageCount)
-        return res.redirect(`/?page=${pageNumber < maxPageCount ? ++pageNumber : pageNumber}`)
+        // console.log(pageNumber <= maxPageCount)
+        return res.redirect(`/home?page=${pageNumber < maxPageCount ? ++pageNumber : pageNumber}`)
     }
     else {
-        res.redirect(`/?page=${pageNumber > 0 ? --pageNumber : 0}`)
+        res.redirect(`/home?page=${pageNumber > 0 ? --pageNumber : 0}`)
     }
 })
 
-app.get("/filter", async (req, res) => {
+app.get("/home/filter", async (req, res) => {
     try {
+        console.log(authors)
         resultOffset = Number(req.query.page ?? 0) * 10
         const genre = req.query.genre ?? false
         const author = req.query.author ?? false
         const query = `
             SELECT 
+            a.name AS author,
             b.id, 
             b.book_title, 
             b.thumbnail, 
@@ -121,7 +123,7 @@ app.get("/filter", async (req, res) => {
             }`
         console.log(query)
         const response = await db.query(query)
-        res.render("index.ejs", { books: response.rows, genres: genres, authors: authors })
+        res.render("index.ejs", { books: response.rows, genres: genres, authors: authors, username: req.cookies.username, user_id: req.cookies.id })
     } catch (error) {
         console.log(error)
     }
@@ -143,8 +145,8 @@ app.get("/bookmarks", async (req, res) => {
 	FROM authors a JOIN books b ON a.id = b.author_id
 	JOIN bookmarks bkm ON b.id = bkm.book_id AND bkm.uid = ${req.user.id};`
         const response = await db.query(query)
-        console.log(response.rowCount)
-        return res.render("bookmarks.ejs", { books: response.rows, count: response.rowCount })
+        // console.log(response.rowCount)
+        return res.render("bookmarks.ejs", { books: response.rows, count: response.rowCount, username: req.cookies.username})
     } else {
         res.redirect("/")
     }
@@ -164,11 +166,72 @@ app.post("/add-to-bookmarks", async (req, res) => {
     }
 })
 
-
-app.post("/login", passport.authenticate("local", {
-    successRedirect: "/home",
-    failureRedirect: "/"
+passport.use(new Strategy(async function verify(username, password, cb) {
+    try {
+        const result = await db.query("SELECT * FROM users WHERE username = $1", [username])
+        // console.log(username, password)
+        if (result.rowCount > 0) {
+            const user = result.rows[0]
+            const storedHasedPassword = user.password
+            const isMatch = await bcrypt.compare(password, storedHasedPassword)
+            if (isMatch) {
+                return cb(null, user)
+            } else {
+                return cb(null, false, { "message": "Password Incorrect!" })
+            }
+        } else {
+            return cb(null, false, "User not found!")
+        }
+    } catch (error) {
+        return cb(error)
+    }
 }))
+
+passport.serializeUser((user, cb) => {
+    cb(null, user.id)
+})
+
+passport.deserializeUser(async (id, cb) => {
+    try {
+        const result = await db.query("SELECT * FROM users WHERE id = $1", [id])
+        if (result.rowCount !== 0) {
+            return cb(null, result.rows[0])
+        } else {
+            return cb(null, false, { "message": "No user found!" })
+        }
+    } catch (error) {
+        cb(error)
+    }
+})
+
+app.post("/login", (req, res, next) => {
+    passport.authenticate("local", (err, user, info) => {
+        if(err) {
+            return next(err)
+        } else if(!user) {
+            return res.redirect("/")
+        } else {
+            req.login(user, (err) => {
+                if(err) {
+                    return next(err)
+                } else {
+                    res.cookie("uid", req.user.id)
+                    res.cookie("username", req.user.username)
+                    return res.redirect("/home")
+                }
+            })
+        }
+    })(req, res, next)
+})
+
+app.get("/logout", (req, res) => {
+    req.logout(function (err) {
+        if (err) {
+            return next(err);
+        }
+        res.redirect("/");
+    })
+})
 
 app.post("/register", async (req, res) => {
     try {
@@ -182,45 +245,13 @@ app.post("/register", async (req, res) => {
         const user = result.rows[0]
         req.login(user, (err) => {
             if (err) throw err
+            res.cookie("uid", req.user.id)
+            res.cookie("username", req.user.username)
             res.redirect("/home")
         })
     } catch (error) {
         console.log(error)
     }
-})
-
-passport.use(new Strategy(async function verify(username, password, cb) {
-    try {
-        const result = await db.query("SELECT * FROM users WHERE username = $1", [username])
-        console.log(username, password)
-        if (result.rowCount > 0) {
-            const user = result.rows[0]
-            const storedHasedPassword = user.password
-            bcrypt.compare(password, storedHasedPassword, (err, result) => {
-                if (err) {
-                    return cb(err)
-                } else {
-                    if (result) {
-                        return cb(null, user)
-                    } else {
-                        return cb(null, user)
-                    }
-                }
-            })
-        } else {
-            return cb("User not found!")
-        }
-    } catch (error) {
-        return cb(error)
-    }
-}))
-
-passport.serializeUser((user, cb) => {
-    cb(null, user)
-})
-
-passport.deserializeUser((user, cb) => {
-    cb(null, user)
 })
 
 app.listen(2000, () => {

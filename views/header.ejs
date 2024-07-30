@@ -1,0 +1,79 @@
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container d-flex justify-content-between align-items-center">
+        <a class="navbar-brand" href="#">
+            <h2 class="d-flex align-items-center text-warning gap-1">
+                <span>
+                    <img src="/images/icon.png" alt="icon" width="40">
+                </span>
+                Archives
+                <span class="text-secondary h6">&copy;DNM</span>
+            </h2>
+        </a>
+        <div class="d-flex gap-1">
+            <div class="pagination-btn">
+                <button class="btn btn-outline-warning">
+                    <a class="page-link" href="/pagination/prev" tabindex="-1" aria-disabled="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                            class="bi bi-arrow-left-circle" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd"
+                                d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5z" />
+                        </svg>
+                    </a>
+                </button>
+                <button class="btn btn-outline-warning">
+                    <a class="page-link" href="/pagination/next">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-right-circle" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0M4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5z"/>
+                          </svg>
+                    </a>
+                </button>
+            </div>
+            <div class="dropdown">
+                <button style="background-color: #f4c430;" class="btn dropdown-toggle" type="button"
+                    id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                    Genre
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1"
+                    style="background-color:  #F4C430 ;">
+                    <% genres.forEach((genre)=> { %>
+                        <li><a class="dropdown-item" href="/home/filter?genre=<%= genre %>&page=0">
+                                <%= genre %>
+                            </a></li>
+                        <% }) %>
+                </ul>
+            </div>
+            <div class="dropdown">
+                <button style="background-color: #f4c430;" class="btn dropdown-toggle" type="button"
+                    id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                    Author
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1"
+                    style="background-color:  #F4C430 ;">
+                    <% authors.forEach((author)=> { %>
+                        <li><a class="dropdown-item" href="/home/filter?author=<%= author %>&page=0">
+                                <%= author %>
+                            </a></li>
+                        <% }) %>
+                </ul>
+            </div>
+            <button class="btn btn-warning">
+                <a href="/bookmarks" class="text-warning link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="black"
+                        class="bi bi-bookmark" viewBox="0 0 16 16">
+                        <path
+                            d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1z" />
+                    </svg>
+                </a>
+            </button>
+        </div>
+        <form method="get" action="/logout" class="d-flex align-items-center gap-3">
+            <h5 class="h5 text-warning"><%= username %></h5>
+            <button type="submit" class="btn btn-outline-warning d-flex justify-content-center align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z"/>
+                    <path fill-rule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708z"/>
+                  </svg>
+            </button>
+        </form>
+    </div>
+</nav>
